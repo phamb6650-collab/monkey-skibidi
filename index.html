@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        :root {
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.5);
+            --accent: #a855f7;
+            --bg-dark: #030712;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            color: #f8fafc;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 50%);
+        }
+
+        .glass-panel {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.005) 100%);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .glass-panel:hover::before {
+            opacity: 1;
+        }
+
+        .sidebar-item.active {
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.2) 0%, transparent 100%);
+            border-left: 3px solid var(--primary);
+            color: var(--primary-text);
+        }
+
+        .neo-button {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .neo-button::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+            transform: scale(0);
+            transition: transform 0.5s ease;
+        }
+
+        .neo-button:hover::after {
+            transform: scale(1);
+        }
+        
+        .neo-button:hover {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(168, 85, 247, 0.3));
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .mood-btn {
+            transition: all 0.2s ease;
+            opacity: 0.5;
+            transform: scale(1);
+        }
+        .mood-btn:hover {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+        .mood-btn.active {
+            opacity: 1;
+            transform: scale(1.3);
+            text-shadow: 0 0 10px var(--primary-glow);
+        }
+        
+        .habit-day {
+            transition: all 0.2s ease;
+        }
+        .habit-day.completed {
+            background-color: var(--primary);
+            transform: scale(1.1);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+        .habit-day.future {
+            background-color: rgba(255,255,255,0.02);
+            border-style: dashed;
+        }
+        .habit-day:not(.future):not(.completed):hover {
+            background-color: rgba(99, 102, 241, 0.3);
+            transform: scale(1.1);
+        }
+
+        .glow-text {
+            text-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 10px;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .tab-content {
+            display: none;
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #canvas-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .card-reveal {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+        .card-reveal:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: rgba(99, 102, 241, 0.6);
+            box-shadow: 0 20px 40px -15px rgba(99, 102, 241, 0.4), inset 0 0 20px rgba(99, 102, 241, 0.1);
+        }
+        
+        /* Enhanced animations */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 10px var(--primary-glow); }
+            50% { text-shadow: 0 0 20px var(--primary-glow), 0 0 30px rgba(168, 85, 247, 0.4); }
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+        
+        .animate-glow {
+            animation: glow 2s ease-in-out infinite;
+        }
+        
+        .animate-shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            background-size: 1000px 100%;
+            animation: shimmer 3s infinite;
+        }
+
+        /* Modern Input Style */
+        .input-modern {
+            background: rgba(10, 10, 15, 0.6) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: #f1f5f9 !important;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+        .input-modern:focus {
+            background: rgba(10, 10, 15, 0.9) !important;
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .input-modern::placeholder {
+            color: rgba(148, 163, 184, 0.5) !important;
+        }
+
+        /* Journal Card Styles */
+        .journal-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 3px solid transparent;
+        }
+        .journal-card:hover {
+            transform: translateX(4px);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .journal-card.active {
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.15) 0%, transparent 100%);
+            border-left-color: var(--primary);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+    </style>
+</head>
+<body class="custom-scrollbar">
+    <canvas id="canvas-bg"></canvas>
+
+    <!-- Sidebar -->
+    <aside class="fixed left-0 top-0 h-full w-20 md:w-64 glass-panel z-50 transition-all duration-300 border-r border-indigo-500/20">
+        <div class="p-6 flex items-center gap-4">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/50 animate-pulse">
+                <i class="fas fa-bolt text-white text-lg"></i>
+            </div>
+            <span class="font-bold text-xl hidden md:block tracking-tighter bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">MY DASHBOARD</span>
+        </div>
+
+        <nav class="mt-10 px-3 space-y-2">
+            <button onclick="switchTab(event, 'dashboard')" class="sidebar-item active w-full flex items-center gap-4 p-4 rounded-xl transition-all group relative">
+                <i class="fas fa-th-large text-lg group-hover:scale-110 group-hover:text-indigo-400 transition-all"></i>
+                <span class="hidden md:block font-medium group-hover:text-indigo-400 transition-colors">Dashboard</span>
+                <div class="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 transition-opacity pointer-events-none"></div>
+            </button>
+            <button onclick="switchTab(event, 'files')" class="sidebar-item w-full flex items-center gap-4 p-4 rounded-xl transition-all group relative">
+                <i class="fas fa-images text-lg group-hover:scale-110 group-hover:text-indigo-400 transition-all"></i>
+                <span class="hidden md:block font-medium group-hover:text-indigo-400 transition-colors">Ảnh & Files</span>
+                <div class="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 transition-opacity pointer-events-none"></div>
+            </button>
+            <button onclick="switchTab(event, 'snippets')" class="sidebar-item w-full flex items-center gap-4 p-4 rounded-xl transition-all group relative">
+                <i class="fas fa-code text-lg group-hover:scale-110 group-hover:text-indigo-400 transition-all"></i>
+                <span class="hidden md:block font-medium group-hover:text-indigo-400 transition-colors">Ghi chú Code</span>
+                <div class="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 transition-opacity pointer-events-none"></div>
+            </button>
+            <button onclick="switchTab(event, 'tools')" class="sidebar-item w-full flex items-center gap-4 p-4 rounded-xl transition-all group relative">
+                <i class="fas fa-terminal text-lg group-hover:scale-110 group-hover:text-indigo-400 transition-all"></i>
+                <span class="hidden md:block font-medium group-hover:text-indigo-400 transition-colors">Công cụ</span>
+                <div class="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 transition-opacity pointer-events-none"></div>
+            </button>
+            <button onclick="switchTab(event, 'journal')" class="sidebar-item w-full flex items-center gap-4 p-4 rounded-xl transition-all group relative">
+                <i class="fas fa-book-open text-lg group-hover:scale-110 group-hover:text-indigo-400 transition-all"></i>
+                <span class="hidden md:block font-medium group-hover:text-indigo-400 transition-colors">Nhật ký</span>
+                <div class="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 transition-opacity pointer-events-none"></div>
+            </button>
+            <button onclick="switchTab(event, 'habits')" class="sidebar-item w-full flex items-center gap-4 p-4 rounded-xl transition-all group relative">
+                <i class="fas fa-star text-lg group-hover:scale-110 group-hover:text-indigo-400 transition-all"></i>
+                <span class="hidden md:block font-medium group-hover:text-indigo-400 transition-colors">Thói quen</span>
+                <div class="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 transition-opacity pointer-events-none"></div>
+            </button>
+        </nav>
+
+        <div class="absolute bottom-8 left-0 w-full px-4">
+            <div class="p-4 rounded-2xl bg-gradient-to-r from-green-500/10 to-green-600/10 border border-green-500/30 hidden md:block shadow-lg shadow-green-500/10">
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">Trạng thái</p>
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-lg shadow-green-400/50"></div>
+                    <span class="text-xs font-medium bg-gradient-to-r from-green-300 to-green-400 bg-clip-text text-transparent">Hệ thống tối ưu</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="pl-20 md:pl-64 min-h-screen">
+        <!-- Top Header -->
+        <header class="sticky top-0 z-40 backdrop-blur-xl border-b border-indigo-500/20 px-8 py-4 flex justify-between items-center bg-gradient-to-b from-indigo-950/50 to-transparent">
+            <div>
+                <h2 id="tab-title" class="text-sm font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent uppercase tracking-[0.2em] animate-glow">Bảng điều khiển</h2>
+                <p class="text-2xl font-bold bg-gradient-to-r from-white to-indigo-200 bg-clip-text text-transparent">Chào mừng trở lại! 👋</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex flex-col items-end">
+                    <span class="text-xs text-slate-400">Phiên bản 2.1.0</span>
+                    <span id="digital-clock" class="text-sm font-mono font-bold text-indigo-400">00:00:00</span>
+                </div>
+                <button onclick="openCommandPalette()" title="Mở Bảng lệnh (Ctrl+Space)" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center cursor-pointer hover:bg-indigo-500/30 hover:text-indigo-300 transition-all hover:shadow-lg hover:shadow-indigo-500/30 group relative">
+                    <i class="fas fa-greater-than text-xl group-hover:translate-x-1 transition-transform"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="p-6 md:p-10 max-w-7xl mx-auto">
+            
+            <!-- DASHBOARD TAB -->
+            <div id="dashboard" class="tab-content active space-y-8">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Task Manager -->
+                    <div class="lg:col-span-2 glass-panel rounded-[2.5rem] p-8 card-reveal relative">
+                        <div class="flex justify-between items-center mb-8">
+                            <h3 class="text-2xl font-bold flex items-center gap-3 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                                <i class="fas fa-check-circle text-indigo-500 text-2xl"></i>
+                                Nhiệm vụ hôm nay
+                            </h3>
+                            <span id="task-count" class="px-4 py-2 rounded-full bg-gradient-to-r from-indigo-500/20 to-purple-500/20 text-[11px] font-bold border border-indigo-500/30 shadow-lg shadow-indigo-500/10">0 TASKS</span>
+                        </div>
+                        
+                        <div class="relative mb-6 group">
+                            <input type="text" id="task-input" placeholder="Viết nhiệm vụ mới rồi nhấn Enter..." 
+                                class="w-full input-modern rounded-2xl px-6 py-4 outline-none text-sm">
+                            <i class="fas fa-plus absolute right-6 top-1/2 -translate-y-1/2 text-slate-500 group-hover:text-indigo-400 group-focus-within:text-indigo-400 transition-colors"></i>
+                        </div>
+
+                        <div id="task-list" class="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                            <!-- Tasks injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Side Widgets -->
+                    <div class="space-y-8">
+                        <div class="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-[2.5rem] p-8 shadow-2xl shadow-indigo-500/30 relative overflow-hidden group border border-indigo-500/30">
+                            <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <div class="absolute top-0 left-0 w-40 h-40 bg-indigo-400/10 rounded-full blur-3xl -translate-x-20 -translate-y-20"></div>
+                                <div class="absolute bottom-0 right-0 w-40 h-40 bg-purple-400/10 rounded-full blur-3xl translate-x-20 translate-y-20"></div>
+                            </div>
+                            <i class="fas fa-rocket absolute -right-4 -bottom-4 text-8xl text-white/5 -rotate-12 group-hover:rotate-0 transition-transform duration-700 z-0"></i>
+                            <div class="relative z-10">
+                                <h3 class="text-white/90 text-sm font-bold uppercase tracking-widest mb-2">Tài nguyên</h3>
+                                <div class="text-4xl font-bold text-white mb-6">Kho lưu trữ</div>
+                                <div class="flex gap-4">
+                                    <div class="bg-white/10 backdrop-blur-md p-4 rounded-2xl flex-1 text-center border border-white/10 hover:border-white/20 transition-all">
+                                        <div id="file-stat" class="text-2xl font-bold text-indigo-200">0</div>
+                                        <div class="text-[11px] uppercase opacity-70 font-semibold">Files</div>
+                                    </div>
+                                    <div class="bg-white/10 backdrop-blur-md p-4 rounded-2xl flex-1 text-center border border-white/10 hover:border-white/20 transition-all">
+                                        <div id="snippet-stat" class="text-2xl font-bold text-purple-200">0</div>
+                                        <div class="text-[11px] uppercase opacity-70 font-semibold">Code</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel rounded-[2.5rem] p-8 card-reveal">
+                            <h3 class="font-bold mb-6 flex items-center gap-2 text-lg bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                                <i class="fas fa-star text-green-500 text-xl"></i> Thói quen hôm nay
+                            </h3>
+                            <div id="habit-widget-list" class="space-y-3">
+                                <!-- Habit widget content injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FILES TAB -->
+            <div id="files" class="tab-content space-y-8">
+                <div id="dropzone" class="relative group p-16 border-2 border-dashed border-indigo-500/30 rounded-[3rem] bg-gradient-to-br from-indigo-950/20 to-purple-950/20 flex flex-col items-center justify-center transition-all hover:bg-indigo-500/10 hover:border-indigo-500/60 hover:shadow-lg hover:shadow-indigo-500/20">
+                    <input type="file" id="file-input" multiple class="absolute inset-0 opacity-0 cursor-pointer">
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500/30 to-purple-500/30 flex items-center justify-center mb-6 group-hover:scale-125 group-hover:from-indigo-500/50 group-hover:to-purple-500/50 transition-all">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-indigo-300"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3 text-white group-hover:text-indigo-300 transition-colors">Thả file hoặc ảnh vào đây</h3>
+                    <p class="text-slate-400 group-hover:text-slate-300 transition-colors">Mọi thứ sẽ được lưu trữ cục bộ ngay lập tức</p>
+                </div>
+
+                <div id="file-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                    <!-- Files injected here -->
+                </div>
+            </div>
+
+            <!-- SNIPPETS TAB -->
+            <div id="snippets" class="tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div class="lg:col-span-4 space-y-4">
+                        <button onclick="addSnippet()" class="w-full p-5 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl font-bold shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/50 hover:from-indigo-500 hover:to-purple-500 transition-all flex items-center justify-center gap-3 border border-indigo-500/30 group">
+                            <i class="fas fa-plus group-hover:rotate-90 transition-transform"></i> Tạo Snippet Mới
+                        </button>
+                        <div id="snippet-list" class="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                            <!-- Snippets list injected here -->
+                        </div>
+                    </div>
+                    <div class="lg:col-span-8 glass-panel rounded-[2.5rem] overflow-hidden flex flex-col h-[650px] border-indigo-500/30 shadow-2xl shadow-indigo-500/20">
+                        <div class="bg-gradient-to-r from-black/60 to-indigo-950/40 p-4 border-b border-indigo-500/20 flex items-center justify-between">
+                            <div class="flex gap-2">
+                                <div class="w-3 h-3 rounded-full bg-red-500/80 shadow-lg shadow-red-500/30"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500/80 shadow-lg shadow-yellow-500/30"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500/80 shadow-lg shadow-green-500/30"></div>
+                            </div>
+                            <span id="editor-title" class="text-xs font-mono text-indigo-300">new_snippet.js</span>
+                            <button onclick="copyEditorContent()" class="text-xs bg-indigo-500/20 hover:bg-indigo-500/40 px-3 py-1 rounded-lg transition-all border border-indigo-500/30 hover:text-indigo-300">
+                                <i class="fas fa-copy"></i> Sao chép
+                            </button>
+                        </div>
+                        <textarea id="code-editor" class="flex-1 input-modern border-0 p-8 font-mono text-sm outline-none resize-none custom-scrollbar" spellcheck="false" placeholder="// Viết code của bạn tại đây..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TOOLS TAB -->
+            <div id="tools" class="tab-content">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- JSON Formatter -->
+                    <div class="glass-panel rounded-[2.5rem] p-8 card-reveal space-y-6 border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/20">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/30 to-cyan-500/20 flex items-center justify-center">
+                                <i class="fas fa-brackets-curly text-blue-400 text-lg"></i>
+                            </div>
+                            <h3 class="font-bold text-lg text-blue-300">JSON Formatter</h3>
+                        </div>
+                        <textarea id="json-input" class="w-full h-40 input-modern rounded-2xl p-4 text-xs font-mono outline-none" placeholder="Dán JSON bẩn vào đây..."></textarea>
+                        <button onclick="formatJSON()" class="w-full py-4 bg-gradient-to-r from-blue-600/30 to-cyan-600/20 border border-blue-500/40 rounded-2xl font-bold hover:from-blue-600/50 hover:to-cyan-600/40 transition-all hover:shadow-lg hover:shadow-blue-500/20">Tối ưu JSON</button>
+                    </div>
+
+                    <!-- Color Picker -->
+                    <div class="glass-panel rounded-[2.5rem] p-8 card-reveal space-y-6 border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/20">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500/30 to-pink-500/20 flex items-center justify-center">
+                                <i class="fas fa-palette text-purple-400 text-lg"></i>
+                            </div>
+                            <h3 class="font-bold text-lg text-purple-300">Bảng màu nhanh</h3>
+                        </div>
+                        <div class="grid grid-cols-4 gap-3">
+                            <div onclick="copyToClipboard('#6366f1')" class="aspect-square rounded-xl cursor-pointer hover:scale-125 transition-transform bg-[#6366f1] shadow-lg hover:shadow-xl hover:shadow-indigo-500/50"></div>
+                            <div onclick="copyToClipboard('#a855f7')" class="aspect-square rounded-xl cursor-pointer hover:scale-125 transition-transform bg-[#a855f7] shadow-lg hover:shadow-xl hover:shadow-purple-500/50"></div>
+                            <div onclick="copyToClipboard('#ec4899')" class="aspect-square rounded-xl cursor-pointer hover:scale-125 transition-transform bg-[#ec4899] shadow-lg hover:shadow-xl hover:shadow-pink-500/50"></div>
+                            <div onclick="copyToClipboard('#ef4444')" class="aspect-square rounded-xl cursor-pointer hover:scale-125 transition-transform bg-[#ef4444] shadow-lg hover:shadow-xl hover:shadow-red-500/50"></div>
+                            <div onclick="copyToClipboard('#f59e0b')" class="aspect-square rounded-xl cursor-pointer hover:scale-125 transition-transform bg-[#f59e0b] shadow-lg hover:shadow-xl hover:shadow-amber-500/50"></div>
+                            <div onclick="copyToClipboard('#10b981')" class="aspect-square rounded-xl cursor-pointer hover:scale-125 transition-transform bg-[#10b981] shadow-lg hover:shadow-xl hover:shadow-emerald-500/50"></div>
+                            <div onclick="copyToClipboard('#06b6d4')" class="aspect-square rounded-xl cursor-pointer hover:scale-125 transition-transform bg-[#06b6d4] shadow-lg hover:shadow-xl hover:shadow-cyan-500/50"></div>
+                            <div onclick="copyToClipboard('#334155')" class="aspect-square rounded-xl cursor-pointer hover:scale-125 transition-transform bg-[#334155] shadow-lg hover:shadow-xl hover:shadow-slate-500/50"></div>
+                        </div>
+                        <div class="text-[10px] text-center text-slate-400 uppercase font-bold tracking-widest">Click màu để copy</div>
+                    </div>
+
+                    <!-- Base64 -->
+                    <div class="glass-panel rounded-[2.5rem] p-8 card-reveal space-y-6 border-orange-500/30 hover:shadow-lg hover:shadow-orange-500/20">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500/30 to-red-500/20 flex items-center justify-center">
+                                <i class="fas fa-shield-alt text-orange-400 text-lg"></i>
+                            </div>
+                            <h3 class="font-bold text-lg text-orange-300">Base64 Encode</h3>
+                        </div>
+                        <input id="base64-input" type="text" placeholder="Nhập text..." class="w-full input-modern rounded-2xl p-4 text-sm outline-none">
+                        <div id="base64-output" class="p-4 bg-black/20 rounded-2xl text-[10px] font-mono break-all min-h-[60px] border border-orange-500/20">Kết quả sẽ hiện ở đây...</div>
+                        <button onclick="handleBase64()" class="w-full py-4 bg-gradient-to-r from-orange-600/30 to-red-600/20 border border-orange-500/40 rounded-2xl font-bold hover:from-orange-600/50 hover:to-red-600/40 transition-all hover:shadow-lg hover:shadow-orange-500/20">Convert</button>
+                    </div>
+
+                    <!-- Character & Word Counter -->
+                    <div class="glass-panel rounded-[2.5rem] p-8 card-reveal space-y-6 border-teal-500/30 hover:shadow-lg hover:shadow-teal-500/20">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-500/30 to-emerald-500/20 flex items-center justify-center">
+                                <i class="fas fa-file-word text-teal-400 text-lg"></i>
+                            </div>
+                            <h3 class="font-bold text-lg text-teal-300">Đếm Ký Tự & Chữ</h3>
+                        </div>
+                        <textarea id="text-counter-input" class="w-full h-40 input-modern rounded-2xl p-4 text-xs font-mono outline-none" placeholder="Dán văn bản vào đây..."></textarea>
+                        <div class="flex justify-around text-center">
+                            <div>
+                                <div id="char-count" class="text-3xl font-bold bg-gradient-to-r from-teal-300 to-emerald-300 bg-clip-text text-transparent">0</div>
+                                <div class="text-[10px] uppercase opacity-60 font-bold">Ký tự</div>
+                            </div>
+                            <div>
+                                <div id="word-count" class="text-3xl font-bold bg-gradient-to-r from-cyan-300 to-teal-300 bg-clip-text text-transparent">0</div>
+                                <div class="text-[10px] uppercase opacity-60 font-bold">Chữ</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- JOURNAL TAB -->
+            <div id="journal" class="tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div class="lg:col-span-4 space-y-4">
+                        <button onclick="selectJournalDate(new Date().toISOString().slice(0,10))" class="w-full p-5 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl font-bold shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/50 hover:from-indigo-500 hover:to-purple-500 transition-all flex items-center justify-center gap-3 border border-indigo-500/30">
+                            <i class="fas fa-calendar-day"></i> Viết cho hôm nay
+                        </button>
+                        <div id="journal-list" class="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                            <!-- Journal entry list injected here -->
+                        </div>
+                    </div>
+                    <div class="lg:col-span-8 glass-panel rounded-[2.5rem] overflow-hidden flex flex-col h-[650px] border-indigo-500/30 shadow-2xl shadow-indigo-500/20">
+                        <div class="bg-gradient-to-r from-black/60 to-indigo-950/40 p-4 border-b border-indigo-500/20 flex items-center justify-between">
+                            <div>
+                                <h3 id="journal-editor-title" class="font-bold text-indigo-300 text-lg">Chọn một ngày để bắt đầu</h3>
+                                <p id="journal-meta-info" class="text-xs text-slate-400 font-mono mt-1 flex items-center gap-2 opacity-0 transition-opacity"><i class="far fa-clock"></i> <span>--:--</span></p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="saveJournalEntry()" class="text-sm bg-gradient-to-r from-green-600/30 to-emerald-600/20 border border-green-500/40 rounded-lg px-4 py-2 font-bold hover:from-green-600/50 hover:to-emerald-600/40 transition-all hover:shadow-lg hover:shadow-green-500/20">
+                                    <i class="fas fa-save"></i> Lưu lại
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-4 border-b border-indigo-500/20">
+                            <h4 class="text-xs uppercase text-slate-400 font-bold mb-3 text-center">Tâm trạng hôm nay?</h4>
+                            <div id="mood-selector" class="flex justify-around">
+                                <button onclick="selectMood('happy')" class="mood-btn text-3xl hover:scale-125 transition-transform" data-mood="happy">😊</button>
+                                <button onclick="selectMood('good')" class="mood-btn text-3xl hover:scale-125 transition-transform" data-mood="good">🙂</button>
+                                <button onclick="selectMood('neutral')" class="mood-btn text-3xl hover:scale-125 transition-transform" data-mood="neutral">😐</button>
+                                <button onclick="selectMood('bad')" class="mood-btn text-3xl hover:scale-125 transition-transform" data-mood="bad">😕</button>
+                                <button onclick="selectMood('awful')" class="mood-btn text-3xl hover:scale-125 transition-transform" data-mood="awful">😠</button>
+                            </div>
+                        </div>
+                        <textarea id="journal-editor" class="flex-1 input-modern border-0 p-8 font-mono text-sm outline-none resize-none custom-scrollbar" spellcheck="false" placeholder="Hôm nay của bạn thế nào?..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HABITS TAB -->
+            <div id="habits" class="tab-content space-y-8">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div class="lg:col-span-4 space-y-4">
+                        <div class="glass-panel rounded-[2.5rem] p-8 border-indigo-500/30">
+                            <h3 class="text-2xl font-bold flex items-center gap-3 mb-6 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                                <i class="fas fa-plus-circle text-indigo-500 text-2xl"></i>
+                                Quản lý Thói quen
+                            </h3>
+                            <div class="relative mb-4 group">
+                                <input type="text" id="habit-input" placeholder="Thêm thói quen mới..." 
+                                    class="w-full input-modern rounded-2xl px-6 py-4 outline-none text-sm">
+                                <button onclick="addHabit()" class="absolute right-2 top-1/2 -translate-y-1/2 p-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 transition-all shadow-lg shadow-indigo-500/30">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div id="habit-list" class="space-y-2 max-h-[450px] overflow-y-auto custom-scrollbar pr-2">
+                                <!-- List of habits to manage -->
+                            </div>
+                        </div>
+                    </div>
+                    <div id="habit-calendar-container" class="lg:col-span-8 glass-panel rounded-[2.5rem] p-8 border-indigo-500/30">
+                        <!-- Calendar grid injected here -->
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </main>
+
+    <!-- Notification -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 glass-panel border-indigo-500/50 px-8 py-4 rounded-[2rem] z-[100] translate-y-20 opacity-0 transition-all duration-500 flex items-center gap-4 pointer-events-none shadow-2xl shadow-indigo-500/30">
+        <i class="fas fa-check-circle text-indigo-300 text-xl animate-bounce"></i>
+        <span id="toast-msg" class="font-bold text-sm tracking-tight text-indigo-200"></span>
+    </div>
+
+    <!-- Command Palette -->
+    <div id="command-palette" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[103] hidden items-start justify-center pt-24">
+        <div class="glass-panel rounded-[2.5rem] border-indigo-500/40 w-full max-w-2xl text-center card-reveal shadow-2xl shadow-indigo-500/30">
+            <div class="relative">
+                <i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-indigo-400"></i>
+                <input type="text" id="command-input" class="w-full bg-transparent text-lg rounded-t-[2.5rem] px-14 py-6 outline-none placeholder-slate-500 text-white" placeholder="Gõ một lệnh...">
+                <div class="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-600 border border-indigo-700/50 rounded-md px-2 py-1">ESC</div>
+            </div>
+            <div id="command-results" class="max-h-[400px] overflow-y-auto custom-scrollbar border-t border-indigo-500/20 text-left">
+                <!-- Command results injected here -->
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- Data Migration ---
+        // Chuyển dữ liệu từ prefix 'dev_' cũ sang 'app_' mới để không làm mất dữ liệu người dùng mặc định.
+        function migrateData() {
+            const oldPrefix = 'dev_';
+            const newPrefix = 'app_';
+            const keysToMigrate = ['tasks_2', 'files_2', 'snippets_2', 'journal_1', 'habits_1', 'habit_logs_1', 'theme_color'];
+
+            // Chỉ chạy nếu chưa có dữ liệu mới và có dữ liệu cũ
+            if (!localStorage.getItem(newPrefix + 'tasks_2') && localStorage.getItem(oldPrefix + 'tasks_2')) {
+                console.log('Performing one-time data migration from dev_ to app_ prefix...');
+                keysToMigrate.forEach(key => {
+                    const oldKey = oldPrefix + key;
+                    const newKey = newPrefix + key;
+                    const data = localStorage.getItem(oldKey);
+                    if (data) {
+                        localStorage.setItem(newKey, data);
+                        localStorage.removeItem(oldKey);
+                    }
+                });
+                // Không cần thông báo cho người dùng, việc này nên diễn ra âm thầm.
+            }
+        }
+        migrateData();
+
+        // State Management
+        // Xử lý tham số URL để chia tách dữ liệu người dùng
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentUser = urlParams.get('u'); // Lấy tham số ?u=...
+        // Nếu không có tham số u, mặc định dùng 'app_'. Nếu có, dùng prefix của người dùng đó.
+        const dbPrefix = currentUser ? `${currentUser}_` : 'app_';
+
+        function getDBKey(keyName) {
+            return dbPrefix + keyName;
+        }
+
+        let tasks = JSON.parse(localStorage.getItem(getDBKey('tasks_2')) || '[]');
+        let files = JSON.parse(localStorage.getItem(getDBKey('files_2')) || '[]');
+        let snippets = JSON.parse(localStorage.getItem(getDBKey('snippets_2')) || '[]');
+        let journalEntries = JSON.parse(localStorage.getItem(getDBKey('journal_1')) || '{}');
+        let habits = JSON.parse(localStorage.getItem(getDBKey('habits_1')) || '[]');
+        let habitLogs = JSON.parse(localStorage.getItem(getDBKey('habit_logs_1')) || '{}');
+
+        // Privacy & State
+        let currentJournalMood = null;
+
+        let currentJournalDate = null;
+        let currentSnippetId = null;
+
+        // Command Palette State
+        let commandPaletteOpen = false;
+        let activeCommandIndex = 0;
+        let filteredCommands = [];
+        const commands = [
+            { name: 'goto dashboard', description: 'Chuyển đến Bảng điều khiển', action: () => { document.querySelector('button[onclick*="dashboard"]').click(); } },
+            { name: 'goto files', description: 'Chuyển đến Ảnh & Files', action: () => { document.querySelector('button[onclick*="files"]').click(); } },
+            { name: 'goto codenotes', description: 'Chuyển đến Ghi chú Code', action: () => { document.querySelector('button[onclick*="snippets"]').click(); } },
+            { name: 'goto tools', description: 'Chuyển đến Công cụ', action: () => { document.querySelector('button[onclick*="tools"]').click(); } },
+            { name: 'goto journal', description: 'Chuyển đến Nhật ký', action: () => { document.querySelector('button[onclick*="journal"]').click(); } },
+            { name: 'goto habits', description: 'Chuyển đến Thói quen', action: () => { document.querySelector('button[onclick*="habits"]').click(); } },
+            { name: 'task add', description: 'Thêm một nhiệm vụ mới. VD: task add Mua sữa', action: (arg) => {
+                if (!arg) { notify("Vui lòng nhập nội dung nhiệm vụ."); return; }
+                tasks.unshift({ id: Date.now(), text: arg, done: false });
+                saveTasks();
+                if (document.getElementById('dashboard').classList.contains('active')) renderTasks();
+                notify(`Đã thêm: ${arg}`);
+            }},
+            { name: 'note new', description: 'Tạo một ghi chú code mới', action: () => {
+                document.querySelector('button[onclick*="snippets"]').click();
+                addSnippet();
+            }},
+            { name: 'theme set', description: 'Đổi màu chủ đạo. VD: theme set #10b981', action: (arg) => {
+                if (!arg || !/^#([0-9A-F]{3}){1,2}$/i.test(arg)) {
+                    notify("Mã màu không hợp lệ. Vui lòng dùng HEX (vd: #ff0000).");
+                    return;
+                }
+                setThemeColor(arg);
+                notify(`Màu chủ đạo đã đổi thành ${arg}`);
+            }},
+            { name: 'theme reset', description: 'Reset màu chủ đạo về mặc định', action: () => {
+                setThemeColor('#6366f1'); // Default color
+                notify('Đã reset màu chủ đạo.');
+            }},
+            { name: 'help', description: 'Hiển thị tất cả các lệnh', action: () => openCommandPalette() },
+        ];
+
+        function setThemeColor(color) {
+            document.documentElement.style.setProperty('--primary', color);
+            document.documentElement.style.setProperty('--primary-glow', hexToRgba(color, 0.5));
+            localStorage.setItem(getDBKey('theme_color'), color);
+        }
+
+        function hexToRgba(hex, alpha) {
+            let r = 0, g = 0, b = 0;
+            if (hex.length == 4) {
+                r = "0x" + hex[1] + hex[1];
+                g = "0x" + hex[2] + hex[2];
+                b = "0x" + hex[3] + hex[3];
+            } else if (hex.length == 7) {
+                r = "0x" + hex[1] + hex[2];
+                g = "0x" + hex[3] + hex[4];
+                b = "0x" + hex[5] + hex[6];
+            }
+            return `rgba(${+r},${+g},${+b},${alpha})`;
+        }
+
+        // Background Animation (Particles)
+        const canvas = document.getElementById('canvas-bg');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function initParticles() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = [];
+            for(let i=0; i<60; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2 + 0.5,
+                    vx: Math.random() * 0.5 - 0.25,
+                    vy: Math.random() * 0.5 - 0.25,
+                    opacity: Math.random() * 0.5
+                });
+            }
+        }
+
+        function drawParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p1 => {
+                p1.x += p1.vx;
+                p1.y += p1.vy;
+
+                if (p1.x < 0 || p1.x > canvas.width) p1.vx *= -1;
+                if (p1.y < 0 || p1.y > canvas.height) p1.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p1.x, p1.y, p1.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(99, 102, 241, ${p1.opacity})`;
+                ctx.fill();
+
+                for (let p2 of particles) {
+                    const dx = p1.x - p2.x;
+                    const dy = p1.y - p2.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 120) {
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = `rgba(99, 102, 241, ${ (1 - dist / 120) * 0.5 })`;
+                        ctx.stroke();
+                    }
+                }
+            });
+            requestAnimationFrame(drawParticles);
+        }
+
+        // Navigation
+        function switchTab(event, tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            const currentButton = event.currentTarget;
+            currentButton.classList.add('active');
+            
+            const buttonText = currentButton.querySelector('span.hidden').textContent;
+            document.getElementById('tab-title').textContent = buttonText;
+            
+            if(tabId === 'files') renderFiles();
+            if(tabId === 'snippets') renderSnippets();            
+            if(tabId === 'journal') renderJournal();
+            if(tabId === 'habits') renderHabitTracker();
+            if(tabId === 'dashboard') {
+                renderTasks();
+                updateStats();
+            }
+        }
+
+        // Clock
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('digital-clock').textContent = now.toLocaleTimeString('en-GB');
+        }
+        setInterval(updateClock, 1000);
+
+        // Toast
+        function notify(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                notify("Đã sao chép: " + text);
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                notify("Lỗi: Không thể sao chép!");
+            }
+        }
+
+        // Task Functions
+        document.getElementById('task-input').onkeydown = (e) => {
+            if(e.key === 'Enter' && e.target.value.trim()) {
+                tasks.unshift({ id: Date.now(), text: e.target.value, done: false });
+                e.target.value = '';
+                saveTasks();
+                renderTasks();
+                notify("Đã thêm nhiệm vụ!");
+            }
+        };
+
+        function renderTasks() {
+            const list = document.getElementById('task-list');
+            list.innerHTML = '';
+            tasks.forEach(t => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between group glass-panel p-4 rounded-2xl border-indigo-500/30 hover:border-indigo-500/60 transition-all hover:shadow-lg hover:shadow-indigo-500/20 hover:bg-indigo-500/5";
+                div.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div onclick="toggleTask(${t.id})" class="w-6 h-6 rounded-lg border-2 border-indigo-500/40 flex items-center justify-center cursor-pointer transition-all ${t.done ? 'bg-gradient-to-br from-indigo-500 to-purple-600 border-indigo-500' : 'hover:border-indigo-500'}">
+                            ${t.done ? '<i class="fas fa-check text-[10px] text-white"></i>' : ''}
+                        </div>
+                        <span class="${t.done ? 'line-through text-slate-500' : 'text-slate-100 font-medium'}">${t.text}</span>
+                    </div>
+                    <button onclick="deleteTask(${t.id})" class="opacity-0 group-hover:opacity-100 p-2 text-red-400/50 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                `;
+                list.appendChild(div);
+            });
+            document.getElementById('task-count').textContent = tasks.length + " TASKS";
+        }
+
+        function toggleTask(id) {
+            tasks = tasks.map(t => t.id === id ? {...t, done: !t.done} : t);
+            saveTasks();
+            renderTasks();
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            saveTasks();
+            renderTasks();
+        }
+
+        function saveTasks() { localStorage.setItem(getDBKey('tasks_2'), JSON.stringify(tasks)); }
+
+        // File Functions
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('file-input');
+
+        fileInput.onchange = (e) => handleFiles(e.target.files);
+
+        function handleFiles(fileList) {
+            Array.from(fileList).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    files.unshift({
+                        id: Math.random(),
+                        name: file.name,
+                        type: file.type,
+                        size: (file.size / 1024).toFixed(1) + ' KB',
+                        data: e.target.result
+                    });
+                    saveFiles();
+                    if(document.getElementById('files').classList.contains('active')) renderFiles();
+                    updateStats();
+                };
+                reader.readAsDataURL(file);
+            });
+            notify("Đã lưu tệp tin!");
+        }
+
+        function renderFiles() {
+            const grid = document.getElementById('file-grid');
+            grid.innerHTML = '';
+            files.forEach(f => {
+                const div = document.createElement('div');
+                div.className = "group relative glass-panel rounded-3xl overflow-hidden card-reveal border-indigo-500/30 hover:border-indigo-500/60 hover:shadow-lg hover:shadow-indigo-500/20";
+                const isImg = f.type.startsWith('image/');
+                div.innerHTML = `
+                    <div class="aspect-square bg-gradient-to-br from-black/60 to-indigo-950/40 flex items-center justify-center relative overflow-hidden">
+                        ${isImg ? `<img src="${f.data}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">` : `<i class="fas fa-file-code text-5xl text-indigo-400/40 group-hover:text-indigo-400/60 transition-colors"></i>`}
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </div>
+                    <div class="p-3 bg-gradient-to-b from-indigo-950/20 to-black/40">
+                        <p class="text-[11px] font-bold truncate text-indigo-200">${f.name}</p>
+                        <p class="text-[9px] text-slate-400 uppercase tracking-widest">${f.size}</p>
+                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-br from-indigo-900/80 to-purple-900/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                        <button onclick="downloadFile('${f.data}', '${f.name}')" class="w-10 h-10 rounded-xl bg-white/20 hover:bg-white/30 flex items-center justify-center backdrop-blur-sm transition-all"><i class="fas fa-download"></i></button>
+                        <button onclick="deleteFile(${f.id})" class="w-10 h-10 rounded-xl bg-red-500/30 hover:bg-red-500/50 flex items-center justify-center backdrop-blur-sm transition-all"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        function downloadFile(data, name) {
+            const a = document.createElement('a');
+            a.href = data;
+            a.download = name;
+            a.click();
+        }
+
+        function deleteFile(id) {
+            files = files.filter(f => f.id !== id);
+            saveFiles();
+            renderFiles();
+            updateStats();
+        }
+
+        function saveFiles() { localStorage.setItem(getDBKey('files_2'), JSON.stringify(files)); }
+
+        // Snippets Functions
+        function addSnippet() {
+            const newSnippet = {
+                id: Date.now(),
+                title: 'New Snippet ' + (snippets.length + 1),
+                code: '// Happy Coding!'
+            };
+            snippets.unshift(newSnippet);
+            saveSnippets();
+            renderSnippets();
+            editSnippet(newSnippet.id);
+        }
+
+        function renderSnippets() {
+            const list = document.getElementById('snippet-list');
+            list.innerHTML = '';
+            snippets.forEach(s => {
+                const div = document.createElement('div');
+                div.className = `p-4 glass-panel rounded-2xl border-indigo-500/30 hover:border-indigo-500/60 cursor-pointer transition-all hover:shadow-lg hover:shadow-indigo-500/20 hover:bg-indigo-500/5 ${currentSnippetId === s.id ? 'border-indigo-500 bg-indigo-500/10 shadow-lg shadow-indigo-500/30' : ''}`;
+                div.onclick = () => editSnippet(s.id);
+                div.innerHTML = `
+                    <div class="flex justify-between items-center gap-2 mb-1">
+                        <span class="text-sm font-bold truncate pr-2 text-indigo-200">${s.title}</span>
+                        <div class="flex items-center shrink-0">
+                            <button onclick="event.stopPropagation(); renameSnippetPrompt(${s.id})" class="p-1 text-slate-400 hover:text-indigo-300 text-xs transition-colors"><i class="fas fa-pencil-alt"></i></button>
+                            <i class="fas fa-chevron-right text-[10px] text-slate-600 ml-1"></i>
+                        </div>
+                    </div>
+                    <p class="text-[10px] font-mono text-slate-400 truncate">${s.code.substring(0, 40)}...</p>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function renameSnippetPrompt(id) {
+            const snippet = snippets.find(s => s.id === id);
+            if (!snippet) return;
+            const newTitle = prompt("Nhập tên mới cho snippet:", snippet.title);
+            if (newTitle && newTitle.trim() !== "") {
+                snippets = snippets.map(s => s.id === id ? { ...s, title: newTitle.trim() } : s);
+                saveSnippets();
+                renderSnippets();
+                if (currentSnippetId === id) editSnippet(id); // Re-run to update editor title
+                notify("Đã đổi tên snippet!");
+            }
+        }
+
+        function editSnippet(id) {
+            currentSnippetId = id;
+            const s = snippets.find(sn => sn.id === id);
+            const editor = document.getElementById('code-editor');
+            editor.value = s.code;
+            document.getElementById('editor-title').textContent = s.title + '.js';
+            renderSnippets();
+        }
+
+        document.getElementById('code-editor').oninput = (e) => {
+            if(!currentSnippetId) return;
+            snippets = snippets.map(s => s.id === currentSnippetId ? {...s, code: e.target.value} : s);
+            saveSnippets();
+        };
+
+        function saveSnippets() { localStorage.setItem(getDBKey('snippets_2'), JSON.stringify(snippets)); }
+
+        function copyEditorContent() {
+            const editor = document.getElementById('code-editor');
+            copyToClipboard(editor.value);
+        }
+
+        // Journal Functions
+        function renderJournal() {
+            const list = document.getElementById('journal-list');
+            list.innerHTML = '';
+            const dates = Object.keys(journalEntries).sort().reverse(); // Show newest first
+
+            dates.forEach(date => {
+                const entryData = journalEntries[date];
+                const contentPreview = (typeof entryData === 'object' ? entryData.content : entryData) || '';
+                const mood = (typeof entryData === 'object' ? entryData.mood : null);
+                const timestamp = (typeof entryData === 'object' ? entryData.timestamp : null);
+
+                if (contentPreview.trim() === '' && !mood) return; // Don't list empty entries
+
+                // Calculate Day of Week
+                const [y, m, d] = date.split('-').map(Number);
+                const dateObj = new Date(y, m - 1, d);
+                const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+                const dayOfWeek = days[dateObj.getDay()];
+                
+                // Format Time
+                const timeStr = timestamp ? new Date(timestamp).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'}) : '';
+
+                const div = document.createElement('div');
+                div.className = `journal-card group p-4 glass-panel rounded-2xl border-white/5 hover:border-indigo-500/30 cursor-pointer relative overflow-hidden ${currentJournalDate === date ? 'active' : ''}`;
+                div.onclick = () => selectJournalDate(date);
+                div.innerHTML = `
+                    <div class="flex justify-between items-center gap-2 mb-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">${getMoodEmoji(mood)}</span>
+                            <div>
+                                <div class="text-xs text-indigo-300 font-bold uppercase tracking-wider">${dayOfWeek}</div>
+                                <div class="text-sm font-bold text-slate-200">${date.split('-').reverse().join('/')}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="text-[10px] font-mono text-slate-500 mr-2 bg-black/20 px-2 py-1 rounded-md">${timeStr || 'Old'}</span>
+                            <span class="text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity mr-2" onclick="event.stopPropagation(); deleteJournalEntry('${date}');"><i class="fas fa-trash"></i></span>
+                            <i class="fas fa-chevron-right text-[10px] text-slate-600 ml-1"></i>
+                        </div>
+                    </div>
+                    <p class="text-[10px] font-mono text-slate-500 truncate pl-8">${contentPreview.substring(0, 60) || 'Chưa có nội dung...'}</p>
+                `;
+                list.appendChild(div);
+            });
+
+            if (!currentJournalDate || !journalEntries[currentJournalDate]) {
+                selectJournalDate(new Date().toISOString().slice(0, 10));
+            } else {
+                selectJournalDate(currentJournalDate);
+            }
+        }
+
+        function selectJournalDate(date) {
+            currentJournalDate = date;
+            const entry = journalEntries[date];
+            const metaInfo = document.getElementById('journal-meta-info');
+            
+            // Calculate Day of Week for Header
+            const [y, m, d] = date.split('-').map(Number);
+            const dateObj = new Date(y, m - 1, d);
+            const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+            const dayOfWeek = days[dateObj.getDay()];
+            const formattedDate = `Ngày ${d} tháng ${m}, ${y}`;
+
+            if (typeof entry === 'object' && entry !== null) {
+                document.getElementById('journal-editor').value = entry.content || '';
+                selectMood(entry.mood);
+                
+                // Show time if available
+                if (entry.timestamp) {
+                    const timeStr = new Date(entry.timestamp).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+                    metaInfo.innerHTML = `<i class="far fa-clock text-indigo-400"></i> Ghi lúc ${timeStr}`;
+                    metaInfo.classList.remove('opacity-0');
+                } else {
+                    metaInfo.classList.add('opacity-0');
+                }
+            } else if (typeof entry === 'string') { // Legacy support
+                document.getElementById('journal-editor').value = entry;
+                selectMood(null);
+                metaInfo.classList.add('opacity-0');
+            } else {
+                document.getElementById('journal-editor').value = '';
+                selectMood(null);
+                metaInfo.classList.add('opacity-0');
+            }
+            
+            document.getElementById('journal-editor-title').innerHTML = `<span class="text-indigo-400">${dayOfWeek}</span>, ${formattedDate}`;
+            renderJournalListActiveState();
+        }
+
+        function renderJournalListActiveState() {
+            const list = document.getElementById('journal-list');
+            Array.from(list.children).forEach(child => {
+                child.classList.remove('active');
+                // Check if this card corresponds to current date (checking the date text inside)
+                // Since we changed the HTML structure, we check the date string in the second div
+                const dateDiv = child.querySelector('.text-sm.font-bold');
+                if (dateDiv && dateDiv.textContent === currentJournalDate.split('-').reverse().join('/')) {
+                    child.classList.add('active');
+                }
+            });
+        }
+
+        async function saveJournalEntry() {
+            if (!currentJournalDate) return;
+             const content = document.getElementById('journal-editor').value;
+            const entryData = {
+                content: content,
+                mood: currentJournalMood,
+                timestamp: new Date().toISOString() // Save current time
+            };
+
+            if (content && content.trim() !== '' || currentJournalMood) {
+                journalEntries[currentJournalDate] = entryData;
+            } else {
+                delete journalEntries[currentJournalDate];
+            }
+            
+            localStorage.setItem(getDBKey('journal_1'), JSON.stringify(journalEntries));
+            notify("Nhật ký đã được lưu!");
+            renderJournal();
+        }
+
+        async function deleteJournalEntry(date) {
+            if (confirm(`Bạn có chắc muốn xóa vĩnh viễn nhật ký ngày ${date}?`)) {
+                delete journalEntries[date];
+                await saveJournalEntry(); // This will re-encrypt and save the data
+                if (currentJournalDate === date) {
+                    selectJournalDate(new Date().toISOString().slice(0,10));
+                }
+                notify(`Đã xóa nhật ký ngày ${date}.`);
+            }
+        }
+
+        function selectMood(mood) {
+            currentJournalMood = mood;
+            const moodButtons = document.querySelectorAll('#mood-selector .mood-btn');
+            moodButtons.forEach(btn => {
+                if (btn.dataset.mood === mood) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        function getMoodEmoji(mood) {
+            switch(mood) {
+                case 'happy': return '😊';
+                case 'good': return '🙂';
+                case 'neutral': return '😐';
+                case 'bad': return '😕';
+                case 'awful': return '😠';
+                default: return '😶';
+            }
+        }
+
+        // Habit Tracker Functions
+        function saveHabits() {
+            localStorage.setItem(getDBKey('habits_1'), JSON.stringify(habits));
+            localStorage.setItem(getDBKey('habit_logs_1'), JSON.stringify(habitLogs));
+        }
+
+        function addHabit() {
+            const input = document.getElementById('habit-input');
+            const habitName = input.value.trim();
+            if (habitName && !habits.includes(habitName)) {
+                habits.push(habitName);
+                input.value = '';
+                saveHabits();
+                renderHabitTracker();
+                renderHabitDashboardWidget();
+                notify(`Đã thêm thói quen: ${habitName}`);
+            }
+        }
+
+        function deleteHabit(habitName) {
+            if (confirm(`Bạn có chắc muốn xóa thói quen "${habitName}"?`)) {
+                habits = habits.filter(h => h !== habitName);
+                // Also clean up logs for this habit
+                Object.keys(habitLogs).forEach(date => {
+                    if (habitLogs[date][habitName] !== undefined) {
+                        delete habitLogs[date][habitName];
+                    }
+                });
+                saveHabits();
+                renderHabitTracker();
+                renderHabitDashboardWidget();
+            }
+        }
+
+        function toggleHabitLog(habitName, dateString) {
+            if (!habitLogs[dateString]) {
+                habitLogs[dateString] = {};
+            }
+            habitLogs[dateString][habitName] = !habitLogs[dateString][habitName];
+            saveHabits();
+            renderHabitTracker();
+            renderHabitDashboardWidget();
+        }
+
+        function renderHabitTracker() {
+            // Render habit management list
+            const habitListContainer = document.getElementById('habit-list');
+            habitListContainer.innerHTML = habits.map(h => `
+                <div class="flex items-center justify-between glass-panel p-3 rounded-xl border-indigo-500/30 hover:border-indigo-500/60 transition-all hover:shadow-lg hover:shadow-indigo-500/20 hover:bg-indigo-500/5">
+                    <span class="text-sm font-medium text-indigo-200">${h}</span>
+                    <button onclick="deleteHabit('${h}')" class="p-2 text-red-400/50 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all">
+                        <i class="fas fa-trash-alt text-xs"></i>
+                    </button>
+                </div>
+            `).join('');
+
+            // Render calendar
+            const calendarContainer = document.getElementById('habit-calendar-container');
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            const monthName = today.toLocaleString('vi-VN', { month: 'long' });
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            let calendarHTML = `<h3 class="text-2xl font-bold mb-8 text-center bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Tiến độ tháng ${monthName}, ${year}</h3>`;
+            calendarHTML += '<div class="space-y-6">';
+
+            habits.forEach(habit => {
+                calendarHTML += '<div class="mb-4">';
+                calendarHTML += `<p class="font-bold text-lg text-indigo-300 mb-3">${habit}</p>`;
+                calendarHTML += '<div class="grid grid-cols-7 gap-2">';
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(year, month, day);
+                    const dateString = date.toISOString().slice(0, 10);
+                    const isCompleted = habitLogs[dateString] && habitLogs[dateString][habit];
+                    const isFuture = date > today;
+                    calendarHTML += `<div onclick="${!isFuture ? `toggleHabitLog('${habit}', '${dateString}')` : ''}" 
+                        class="habit-day aspect-square rounded-lg border flex items-center justify-center text-xs font-mono cursor-pointer transition-all
+                        ${isCompleted ? 'bg-gradient-to-br from-green-500/40 to-emerald-600/40 border-green-500 shadow-lg shadow-green-500/20' : 'border-indigo-500/30 hover:border-indigo-500/60 hover:bg-indigo-500/10'} 
+                        ${isFuture ? 'border-dashed opacity-50 cursor-not-allowed' : ''}">
+                        ${day}
+                    </div>`;
+                }
+                calendarHTML += '</div></div>';
+            });
+
+            calendarHTML += '</div>';
+            calendarContainer.innerHTML = calendarHTML;
+        }
+
+        function renderHabitDashboardWidget() {
+            const widgetContainer = document.getElementById('habit-widget-list');
+            const todayString = new Date().toISOString().slice(0, 10);
+            if (habits.length === 0) {
+                widgetContainer.innerHTML = `<p class="text-xs text-slate-500">Chưa có thói quen nào. Hãy thêm ở tab 'Thói quen'.</p>`;
+                return;
+            }
+            widgetContainer.innerHTML = habits.map(habit => {
+                const isCompleted = habitLogs[todayString] && habitLogs[todayString][habit];
+                return `
+                    <div onclick="toggleHabitLog('${habit}', '${todayString}')" class="flex items-center gap-4 group glass-panel p-3 rounded-xl border-indigo-500/30 hover:border-indigo-500/60 transition-all cursor-pointer hover:shadow-lg hover:shadow-indigo-500/20 hover:bg-indigo-500/5">
+                        <div class="w-6 h-6 rounded-lg border-2 border-indigo-500/40 flex items-center justify-center transition-all ${isCompleted ? 'bg-gradient-to-br from-green-500 to-emerald-600 border-green-500 shadow-lg shadow-green-500/30' : 'hover:border-indigo-500'}">
+                            ${isCompleted ? '<i class="fas fa-check text-[10px] text-white"></i>' : ''}
+                        </div>
+                        <span class="${isCompleted ? 'line-through text-slate-500' : 'text-slate-100 font-medium'} transition-colors">${habit}</span>
+                    </div>`;
+            }).join('');
+        }
+
+        // Tools
+        function formatJSON() {
+            const input = document.getElementById('json-input');
+            try {
+                const obj = JSON.parse(input.value);
+                input.value = JSON.stringify(obj, null, 4);
+                notify("JSON đã được format mượt mà!");
+            } catch(e) {
+                notify("Lỗi: Định dạng JSON không đúng!");
+            }
+        }
+
+        function handleBase64() {
+            const val = document.getElementById('base64-input').value;
+            const output = btoa(val);
+            document.getElementById('base64-output').textContent = output;
+            notify("Đã convert sang Base64!");
+        }
+
+        function updateStats() {
+            document.getElementById('file-stat').textContent = files.length;
+            document.getElementById('snippet-stat').textContent = snippets.length;
+        }
+
+        // Initialize
+        function initializeApp() {
+            initParticles();
+            const savedColor = localStorage.getItem(getDBKey('theme_color'));
+            if (savedColor) {
+                setThemeColor(savedColor);
+            }
+            drawParticles();
+            renderTasks();
+            renderHabitDashboardWidget();
+            updateStats();
+            updateClock();
+
+            document.getElementById('task-input').onkeydown = (e) => {
+                if(e.key === 'Enter' && e.target.value.trim()) {
+                    tasks.unshift({ id: Date.now(), text: e.target.value, done: false });
+                    e.target.value = '';
+                    saveTasks();
+                    renderTasks();
+                    notify("Đã thêm nhiệm vụ!");
+                }
+            };
+
+            const textCounterInput = document.getElementById('text-counter-input');
+            if (textCounterInput) {
+                textCounterInput.addEventListener('input', () => {
+                    const text = textCounterInput.value;
+                    const charCount = text.length;
+                    const wordCount = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+                    document.getElementById('char-count').textContent = charCount;
+                    document.getElementById('word-count').textContent = wordCount;
+                });
+            }
+        }
+
+        window.onload = () => {
+            initializeApp();
+
+            // Command Palette Listeners
+            window.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.code === 'Space') {
+                    e.preventDefault();
+                    commandPaletteOpen ? closeCommandPalette() : openCommandPalette();
+                }
+                if (e.key === 'Escape' && commandPaletteOpen) {
+                    closeCommandPalette();
+                }
+            });
+
+            const commandInput = document.getElementById('command-input');
+            commandInput.addEventListener('input', () => renderCommandResults(commandInput.value));
+            commandInput.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    activeCommandIndex = Math.min(activeCommandIndex + 1, filteredCommands.length - 1);
+                    updateCommandSelection();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    activeCommandIndex = Math.max(activeCommandIndex - 1, 0);
+                    updateCommandSelection();
+                } else if (e.key === 'Enter') {
+                    executeCommand();
+                }
+            });
+        };
+
+        window.onresize = initParticles;
+
+        // Command Palette Functions
+        function openCommandPalette() {
+            document.getElementById('command-palette').classList.remove('hidden');
+            document.getElementById('command-palette').classList.add('flex');
+            document.getElementById('command-input').focus();
+            renderCommandResults('');
+            commandPaletteOpen = true;
+        }
+
+        function closeCommandPalette() {
+            document.getElementById('command-palette').classList.add('hidden');
+            document.getElementById('command-palette').classList.remove('flex');
+            document.getElementById('command-input').value = '';
+            commandPaletteOpen = false;
+        }
+
+        function renderCommandResults(query) {
+            const resultsContainer = document.getElementById('command-results');
+            resultsContainer.innerHTML = '';
+            filteredCommands = commands.filter(c => c.name.includes(query) || c.description.includes(query));
+            activeCommandIndex = 0;
+
+            filteredCommands.forEach((cmd, index) => {
+                const div = document.createElement('div');
+                div.className = `px-6 py-3 cursor-pointer flex justify-between items-center ${index === 0 ? 'bg-indigo-500/10' : ''}`;
+                div.innerHTML = `<span class="font-medium">${cmd.name}</span><span class="text-xs text-slate-500">${cmd.description}</span>`;
+                div.onclick = () => { activeCommandIndex = index; executeCommand(); };
+                resultsContainer.appendChild(div);
+            });
+        }
+
+        function updateCommandSelection() {
+            document.querySelectorAll('#command-results > div').forEach((el, index) => {
+                el.classList.toggle('bg-indigo-500/10', index === activeCommandIndex);
+            });
+        }
+
+        function executeCommand() {
+            const command = filteredCommands[activeCommandIndex];
+            const fullInput = document.getElementById('command-input').value;
+            const argument = fullInput.replace(command.name, '').trim();
+            if (command) {
+                command.action(argument);
+                closeCommandPalette();
+            }
+        }
+    </script>
+</body>
+</html>
